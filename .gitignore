@@ -1,0 +1,6 @@
+figuredata/xml/
+figuredata/images/
+*.log
+.DS_Store
+/badges
+/figuredata/compiled

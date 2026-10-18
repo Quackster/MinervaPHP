@@ -1,0 +1,3 @@
+# Minerva — route the imager endpoints to minerva.php
+RewriteEngine On
+RewriteRule ^habbo-imaging(/.*)?$ /minerva.php [L,QSA]
