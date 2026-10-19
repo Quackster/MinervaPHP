@@ -52,12 +52,25 @@ unzipped automatically (no build step, no CLI).
 
 ### Smoke test
 
+To run the server ad-hoc without Apache/nginx, `minerva.php` doubles as a
+router for the PHP built-in server (it dispatches on `REQUEST_URI`):
+
 ```sh
-curl -o avatar.png "https://your-site/habbo-imaging/avatarimage?figure=hd-180-1.hr-100-61.ch-210-66.lg-270-82.sh-290-80&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1"
-curl -o badge.gif "https://your-site/habbo-imaging/badge/b0101.gif"
-curl "https://your-site/habbo-imaging/avatarimage/convert?figure=1000118001270012900121001"
+cd MinervaPHP
+php -S 127.0.0.1:8080 minerva.php
+```
+
+Then hit the endpoints against `http://127.0.0.1:8080`:
+
+```sh
+curl -o avatar.png "http://127.0.0.1:8080/habbo-imaging/avatarimage?figure=hd-180-1.hr-100-61.ch-210-66.lg-270-82.sh-290-80&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1"
+curl -o badge.gif "http://127.0.0.1:8080/habbo-imaging/badge/b0101.gif"
+curl "http://127.0.0.1:8080/habbo-imaging/avatarimage/convert?figure=1000118001270012900121001"
 # → {"figure":"hr-100-1150.hd-180-1026.ch-210-1284.lg-270-1223.sh-290-1247.ha-0-1150"}
 ```
+
+(Or use the `https://your-site/...` URLs in the same commands once the
+addon is deployed behind Apache/nginx.)
 
 ## API endpoints
 
@@ -116,6 +129,32 @@ for `y`, the avatar `MutatePoint` (+1, +2) offset, the `int.Parse`
 FormatException on 5-character flash `s`-badge codes, flash-mode badge
 resources never tinting because the JSON spells the color type "Color1" while
 the lookup asks for "colour1").
+
+## Server rewrite rules
+
+The imager endpoints must be routed to `minerva.php`.
+
+### Apache (`.htaccess`)
+
+The bundled `.htaccess` already does this:
+
+```apache
+RewriteEngine On
+RewriteRule ^habbo-imaging(/.*)?$ /minerva.php [L,QSA]
+```
+
+### Nginx
+
+Inside your `server { ... }` block:
+
+```nginx
+location ~ ^/habbo-imaging(/.*)?$ {
+    rewrite ^ /minerva.php last;
+}
+```
+
+`$query_string` is passed through automatically, so no extra handling is needed
+for the `avatarimage` query parameters.
 
 ## Differences from the original
 
